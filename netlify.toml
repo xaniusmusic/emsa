@@ -1,0 +1,41 @@
+# Netlify configuration for RADIO·SIM
+# Docs: https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  # Vite 7 requires Node 20.19+ or 22.12+
+  NODE_VERSION = "22"
+  NPM_FLAGS = "--include=dev"
+
+# Single-page app: any unknown path serves the app (no 404s on deep links / refresh)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# The whole app (JS + CSS) is inlined into index.html, so never let browsers
+# or the CDN serve a stale copy after a new deploy.
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Microphone/camera/geolocation are not used by the app.
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    # NOTE: Do NOT add Cross-Origin-Embedder-Policy / COOP here. Cross-origin
+    # isolation would block the Broadcastify / LiveATC audio streams and the
+    # neural-voice model downloads (HuggingFace, cdnjs, jsDelivr).
